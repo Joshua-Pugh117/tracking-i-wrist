@@ -1,0 +1,91 @@
+# Object Tracking with SAM2 (simulating live video stream)
+
+## Getting Started
+
+### Installation
+
+SAM 2 needs to be installed first before use. The code requires `python>=3.10`, as well as `torch>=2.5.1` and `torchvision>=0.20.1`. Please follow the instructions [here](https://pytorch.org/get-started/locally/) to install both PyTorch and TorchVision dependencies. You can install SAM 2 on a GPU machine using:
+
+```bash
+git clone https://gitlab.univ-lr.fr/jpugh/tracking-i-wrist.git && cd tracking-i-wrist
+
+pip install -e .
+```
+If you are installing on Windows, it's strongly recommended to use [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) with Ubuntu.
+
+
+### Download Checkpoints
+
+First, we need to download a model checkpoint. All the model checkpoints can be downloaded by running:
+
+```bash
+cd checkpoints && \
+./download_ckpts.sh && \
+cd ..
+```
+
+or individually from:
+
+- [sam2.1_hiera_tiny.pt](https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_tiny.pt)
+- [sam2.1_hiera_small.pt](https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt)
+- [sam2.1_hiera_base_plus.pt](https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_base_plus.pt)
+- [sam2.1_hiera_large.pt](https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt)
+
+
+## demo_simple.py
+
+## Setup
+
+Before running the scripts, ensure the dataset `2025_01_29` is placed at the root of this repository. Alternatively, modify the code to point to the correct dataset directory.
+
+## References:
+
+- SAM2 Repository: https://github.com/facebookresearch/sam2
+- SAM2 real-time: https://github.com/Gy920/segment-anything-2-real-time
+
+## Sam2 tracking function
+
+```python
+import numpy as np 
+import torch 
+from sam2.build_sam import build_sam2_camera_predictor
+
+# Initialize SAM2 predictor
+sam2_checkpoint = "checkpoints/sam2.1_hiera_large.pt"
+model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
+predictor = build_sam2_camera_predictor(model_cfg, sam2_checkpoint)
+
+
+def track_object(predictor, frame, init_mask=None):
+    """
+    Tracks an object in a frame using SAM2 predictor.
+    
+    Args:
+        predictor: SAM2 camera predictor instance
+        frame: Input frame (BGR format)
+        init_mask: Initial mask for the first frame (numpy array, uint8), None for subsequent frames
+    
+    Returns:
+        mask: Binary mask of the tracked object (numpy array, uint8)
+    """
+    with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
+        # Convert frame to RGB for SAM2
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        if init_mask is not None:
+            # Initialize tracking with the provided mask
+            predictor.load_first_frame(frame_rgb)
+            _, _, out_mask_logits = predictor.add_new_mask(
+                frame_idx=0,
+                obj_id=1,
+                mask=init_mask
+            )
+        else:
+            # Continue tracking
+            _, out_mask_logits = predictor.track(frame_rgb)
+        
+        # Convert logits to binary mask
+        mask = (out_mask_logits[0] > 0.0).cpu().numpy().astype(np.uint8)[0]
+        return mask
+
+```
