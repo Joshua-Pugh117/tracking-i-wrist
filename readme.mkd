@@ -1,3 +1,5 @@
+⚠️ PDF preview on GitHub may not display images correctly — please download the file to view it properly.
+
 ## Branches
 
 - **`homography`**: Includes tracking implemented using homography techniques, with multiple example Python scripts demonstrating the approach.
