@@ -1,0 +1,4 @@
+## Branches
+
+- **`homography`**: Includes tracking implemented using homography techniques, with multiple example Python scripts demonstrating the approach.
+- **`sam2`**: Includes tracking implemented using the SAM2 method.
