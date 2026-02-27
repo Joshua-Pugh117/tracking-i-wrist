@@ -1,0 +1,11 @@
+## Setup
+
+Before running the scripts, ensure the dataset `2025_01_29` is placed at the root of this repository. Alternatively, modify the code to point to the correct dataset directory.
+
+## Scripts
+
+The repository includes the following Python scripts:
+
+- **`homography.py`**: Performs homography between "ground truth" frames which are provided every `N` frames.
+- **`homography_grabcut.py`**: Performs homography between "ground truth" frames which are provided every `N` frames and uses the GrabCut algorithm to correct segmentation errors every `M` frames.
+- **`homography_snake.py`**: Performs homography between "ground truth" frames which are provided every `N` frames and attempts to refine segmentation using an active contour (snake) algorithm. Note: This script is currently non-functional due to noisy gradients.
